@@ -1,12 +1,18 @@
 package com.w3f.jsoup;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class App {
     public static void main(String[] args) throws IOException {
@@ -31,6 +37,18 @@ public class App {
                 .desc("Jsoup HTML selector")
                 .longOpt("selector")
                 .build();
+        Option attribute = Option.builder("a")
+                .argName("attribute")
+                .hasArg()
+                .desc("Output attribute value instead of text. E.g --attribute=href")
+                .longOpt("attribute")
+                .build();
+        Option tags = Option.builder("t")
+                .argName("list-tags")
+                .hasArg(false)
+                .desc("List all children tags in selected query")
+                .longOpt("list-tags")
+                .build();
         Option help = Option.builder()
                 .argName("help")
                 .longOpt("help")
@@ -40,6 +58,8 @@ public class App {
                 .addOption(url)
                 .addOption(selector)
                 .addOption(html)
+                .addOption(attribute)
+                .addOption(tags)
                 .addOption(help);
 
         CommandLineParser commandLineParser = new DefaultParser();
@@ -50,7 +70,7 @@ public class App {
 
             if (commandLine.hasOption(help.getArgName())) {
                 HelpFormatter helpFormatter = new HelpFormatter();
-                helpFormatter.printHelp("[option]", options);
+                helpFormatter.printHelp("[options]", options);
             }
             if (commandLine.hasOption(url.getOpt())) {
                 doc = Jsoup.connect(commandLine.getOptionValue(url.getArgName())).get();
@@ -59,10 +79,24 @@ public class App {
                 doc = Jsoup.parse(commandLine.getOptionValue(html.getArgName()));
             }
             if (commandLine.hasOption(selector.getOpt())) {
-                String collect = doc.select(commandLine.getOptionValue(selector.getArgName())).stream()
-                        .map(Element::text)
-                        .collect(Collectors.joining("\n"));
-                System.out.println(collect);
+                String output;
+                Stream<Element> elements = doc.select(commandLine.getOptionValue(selector.getArgName())).stream();
+
+                if (commandLine.hasOption(attribute.getOpt())) {
+                    output = elements.map(e -> e.attr(commandLine.getOptionValue(attribute.getArgName())))
+                            .collect(Collectors.joining("\n"));
+                } else if(commandLine.hasOption(tags.getOpt())) {
+                    output = elements.map(e -> e.getAllElements()
+                            .stream()
+                            .map(Element::tagName)
+                            .collect(Collectors.joining("\n")))
+                            .collect(Collectors.joining("\n"));
+                } else {
+                    output = elements
+                            .map(Element::text)
+                            .collect(Collectors.joining("\n"));
+                }
+                System.out.println(output);
             }
         } catch (Exception e) {
             System.out.println(e);
