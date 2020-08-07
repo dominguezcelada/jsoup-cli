@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static sun.misc.Version.print;
+
 public class App {
     public static void main(String[] args) throws IOException {
 
@@ -93,8 +95,11 @@ public class App {
                     output = elements.map(e -> e.attr(commandLine.getOptionValue(attribute.getArgName())))
                             .collect(Collectors.joining("\n"));
                 } else if(commandLine.hasOption(dataset.getOpt())) {
-                    output = elements.map(e -> e.dataset(commandLine.getOptionValue(dataset.getArgName())))
-                            .collect(Collectors.joining("\n"));
+                    System.out.println();
+                    output = elements.map(e -> {
+                        e.dataset().forEach((datasetKey, datasetValue) -> System.out.println(datasetKey + " " + datasetValue));
+                        return e.dataset().get(commandLine.getOptionValue(dataset.getArgName()));
+                    }).collect(Collectors.joining("\n"));
                 } else if(commandLine.hasOption(tags.getOpt())) {
                     output = elements.map(e -> e.getAllElements()
                             .stream()
