@@ -43,6 +43,12 @@ public class App {
                 .desc("Output attribute value instead of text. E.g --attribute=href")
                 .longOpt("attribute")
                 .build();
+        Option dataset = Option.builder("d")
+                .argName("dataset")
+                .hasArg()
+                .desc("Output dataset value instead of text. E.g --dataset=videoUrl")
+                .longOpt("dataset")
+                .build();
         Option tags = Option.builder("t")
                 .argName("list-tags")
                 .hasArg(false)
@@ -59,6 +65,7 @@ public class App {
                 .addOption(selector)
                 .addOption(html)
                 .addOption(attribute)
+                .addOption(dataset)
                 .addOption(tags)
                 .addOption(help);
 
@@ -84,6 +91,9 @@ public class App {
 
                 if (commandLine.hasOption(attribute.getOpt())) {
                     output = elements.map(e -> e.attr(commandLine.getOptionValue(attribute.getArgName())))
+                            .collect(Collectors.joining("\n"));
+                } else if(commandLine.hasOption(dataset.getOpt())) {
+                    output = elements.map(e -> e.dataset(commandLine.getOptionValue(dataset.getArgName())))
                             .collect(Collectors.joining("\n"));
                 } else if(commandLine.hasOption(tags.getOpt())) {
                     output = elements.map(e -> e.getAllElements()
